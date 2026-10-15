@@ -297,9 +297,20 @@
         let currentCostPerChar = 250;
         let currentAccBonus = 5000;
 
-        set(ref(db, 'room_session/config'), {
-            costPerChar: currentCostPerChar,
-            accBonus: currentAccBonus
+        // Ambil config dari Firebase secara live
+        onValue(ref(db, 'room_session/config'), (snapshot) => {
+            if (snapshot.exists()) {
+                const cfg = snapshot.val();
+                currentCostPerChar = cfg.costPerChar || 250;
+                currentAccBonus = cfg.accBonus || 5000;
+                document.getElementById('costInput').value = currentCostPerChar;
+                document.getElementById('bonusInput').value = currentAccBonus;
+            } else {
+                set(ref(db, 'room_session/config'), {
+                    costPerChar: currentCostPerChar,
+                    accBonus: currentAccBonus
+                });
+            }
         });
 
         window.saveGameConfig = function() {
@@ -307,9 +318,6 @@
             const bonus = parseInt(document.getElementById('bonusInput').value);
 
             if (isNaN(cost) || isNaN(bonus)) return alert("Isi angka yang valid!");
-
-            currentCostPerChar = cost;
-            currentAccBonus = bonus;
 
             update(ref(db, 'room_session/config'), {
                 costPerChar: cost,
@@ -398,7 +406,7 @@
             }
         };
 
-        // Realtime Listener: Inbox SMS Jawaban
+        // Realtime Listener: Inbox SMS Jawaban & Tombol Koreksi
         onValue(ref(db, 'submissions'), (snapshot) => {
             const data = snapshot.val();
             const tbody = document.getElementById('inboxTableBody');
@@ -414,8 +422,10 @@
 
             items.forEach(item => {
                 const tr = document.createElement('tr');
+                let statusVal = item.status || 'PENDING';
                 let actionHtml = '-';
-                if (item.status === 'PENDING') {
+
+                if (statusVal === 'PENDING') {
                     actionHtml = `
                         <div class="action-btns">
                             <button class="btn btn-success btn-sm" onclick="verdict('${item.id}', 'ACC', '${item.playerName}')">ACC (+Rp${currentAccBonus.toLocaleString('id-ID')})</button>
@@ -427,16 +437,16 @@
                 tr.innerHTML = `
                     <td>${item.timestamp || '-'}</td>
                     <td><b>${item.playerName}</b></td>
-                    <td><code style="color:#38bdf8; font-size:1.05rem;">${item.answerText}</code></td>
+                    <td><code style="color:#38bdf8; font-size:1.05rem;">${item.answerText || ''}</code></td>
                     <td>Rp${(item.costDeducted || 0).toLocaleString('id-ID')}</td>
-                    <td><span class="badge ${item.status}">${item.status}</span></td>
+                    <td><span class="badge ${statusVal}">${statusVal}</span></td>
                     <td>${actionHtml}</td>
                 `;
                 tbody.appendChild(tr);
             });
         });
 
-        // Verdict ACC / TOLAK
+        // Verdict ACC / TOLAK (Memberikan Bonus Pulsa Otomatis)
         window.verdict = async function(subId, status, playerName) {
             update(ref(db, 'submissions/' + subId), { status: status });
 
@@ -542,16 +552,4 @@
         <!-- Panel Soal Aktif & Input Soal -->
         <div class="panel">
             <h3>✉ KIRIM & KONTROL SOAL LIVE</h3>
-            <div id="activeQuestionText" style="font-size: 1.1rem; color: #facc15; font-weight: bold; background: #1e293b; padding: 12px; border-radius: 6px; margin-bottom: 12px; border-left: 4px solid #38bdf8;">
-                Belum ada soal dikirim.
-            </div>
-            <div class="input-group">
-                <input type="text" id="questionInput" placeholder="Ketik soal pelajaran di sini..." onkeypress="if(event.key==='Enter') sendQuestion()">
-                <button class="btn" onclick="sendQuestion()">KIRIM SOAL</button>
-                <button class="btn btn-danger" onclick="clearActiveQuestion()">SELESAI / KOSONGKAN SOAL</button>
-            </div>
-        </div>
-
-        <!-- Panel Inbox SMS Jawaban -->
-        <div class="panel">
-            <div style="
+            <div id="activeQuestionText" style="font-size: 1.1rem; color: #facc15; font-weight: bold; background: #1e293b; padding: 12px; border-radius: 6px; margin-bottom: 12px; border-left: 4px solid

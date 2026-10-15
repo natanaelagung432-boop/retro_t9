@@ -71,11 +71,6 @@
             border: 1px solid #475569;
         }
 
-        .quick-nav {
-            display: flex;
-            gap: 8px;
-        }
-
         .container {
             max-width: 1100px;
             margin: 0 auto;
@@ -149,6 +144,7 @@
             display: flex;
             gap: 8px;
             flex-wrap: wrap;
+            margin-top: 8px;
         }
 
         input[type="text"], input[type="number"], input[type="password"] {
@@ -422,6 +418,15 @@
             }
         };
 
+        // Sinkronisasi Realtime Soal Aktif di Dashboard Guru
+        onValue(ref(db, 'room_session/current_question'), (snapshot) => {
+            const q = snapshot.val();
+            const qEl = document.getElementById('activeQuestionText');
+            if (qEl) {
+                qEl.innerText = (q && q.trim() !== "") ? q : "Belum ada soal dikirim.";
+            }
+        });
+
         // Realtime Listener: Inbox SMS Jawaban & Tombol Koreksi
         onValue(ref(db, 'submissions'), (snapshot) => {
             const data = snapshot.val();
@@ -476,10 +481,6 @@
                 }
             }
         };
-
-        window.scrollToInbox = function() {
-            document.getElementById('inboxPanel').scrollIntoView({ behavior: 'smooth' });
-        };
     </script>
 </head>
 <body>
@@ -496,15 +497,13 @@
 
     <div class="header-nav">
         <a href="../index.html" class="btn-back">← Portal Utama</a>
-        <div class="quick-nav">
-            <button class="btn btn-warning btn-sm" onclick="scrollToInbox()">👇 Lompat ke Inbox Koreksi</button>
-        </div>
+        <div style="font-size: 0.85rem; color: #38bdf8;">Dashboard Kontrol Guru</div>
     </div>
 
     <div class="container">
         <h1>👨‍🏫 DASHBOARD KONTROL GURU</h1>
 
-        <!-- Panel Soal Aktif & Input Soal (Ditaruh Di Atas Agar Mudah Mengirim) -->
+        <!-- Panel Soal Aktif & Input Soal -->
         <div class="panel">
             <h3>✉ KIRIM & KONTROL SOAL LIVE</h3>
             <div id="activeQuestionText" style="font-size: 1rem; color: #facc15; font-weight: bold; background: #1e293b; padding: 10px; border-radius: 6px; margin-bottom: 10px; border-left: 4px solid #38bdf8;">
@@ -513,11 +512,11 @@
             <div class="input-group">
                 <input type="text" id="questionInput" placeholder="Ketik soal pelajaran di sini..." onkeypress="if(event.key==='Enter') sendQuestion()">
                 <button class="btn" onclick="sendQuestion()">KIRIM SOAL</button>
-                <button class="btn btn-danger" onclick="clearActiveQuestion()">KOSONGKAN SOAL</button>
+                <button class="btn btn-danger" onclick="clearActiveQuestion()">KOSONGKAN</button>
             </div>
         </div>
 
-        <!-- Panel Inbox SMS Jawaban (Dipindah Lebih Ke Atas & Diberi Highlight) -->
+        <!-- Panel Inbox SMS Jawaban & Koreksi -->
         <div class="panel panel-highlight" id="inboxPanel">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
                 <h3 style="margin-bottom:0; border-bottom:none;">📥 INBOX JAWABAN SISWA (KOREKSI REAL-TIME)</h3>
@@ -557,4 +556,4 @@
             <div class="panel">
                 <h3>⚙ TARIF & BONUS</h3>
                 <div class="setting-row">
-                    <label>Biaya/Karakter
+       

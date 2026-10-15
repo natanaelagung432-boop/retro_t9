@@ -21,6 +21,35 @@
             padding: 20px;
         }
 
+        /* Modal Auth Guru Overlay */
+        .auth-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: #0f172a;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .auth-card {
+            background: #1e293b;
+            border: 2px solid #38bdf8;
+            padding: 30px;
+            border-radius: 12px;
+            max-width: 380px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.7);
+        }
+
+        .auth-card h2 {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 0.9rem;
+            color: #38bdf8;
+            margin-bottom: 15px;
+        }
+
         .header-nav {
             max-width: 1000px;
             margin: 0 auto 15px auto;
@@ -74,6 +103,7 @@
             border: 1px solid #334155;
             border-radius: 8px;
             padding: 18px;
+            margin-bottom: 20px;
         }
 
         .panel h3 {
@@ -105,7 +135,7 @@
             gap: 10px;
         }
 
-        input[type="text"] {
+        input[type="text"], input[type="password"] {
             flex-grow: 1;
             padding: 10px 12px;
             background-color: #1e293b;
@@ -115,7 +145,7 @@
             font-size: 0.95rem;
         }
 
-        input[type="text"]:focus {
+        input:focus {
             outline: none;
             border-color: #38bdf8;
         }
@@ -139,7 +169,7 @@
         .btn-success { background-color: #22c55e; }
         .btn-success:hover { background-color: #16a34a; }
 
-        /* Table Inbox */
+        /* Table Responsive */
         .table-responsive {
             overflow-x: auto;
             margin-top: 10px;
@@ -186,33 +216,42 @@
         }
     </style>
 
-    <!-- Firebase SDK Modular (v10) -->
+    <!-- Firebase SDK v10 -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getDatabase, ref, set, push, onValue, update, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
         // ==========================================================
-        // CONFIGURASI FIREBASE (Ganti sesuai dengan Project Firebase Anda)
+        // KONFIGURASI FIREBASE
         // ==========================================================
         const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-            databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_PROJECT_ID.appspot.com",
-            messagingSenderId: "YOUR_SENDER_ID",
-            appId: "YOUR_APP_ID"
-        };
+  apiKey: "AIzaSyAu-laSOM1Sq4E3_TOtY2c3-UkB4NWCZ2M",
+  authDomain: "retro-communication.firebaseapp.com",
+  databaseURL: "https://retro-communication-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "retro-communication",
+  storageBucket: "retro-communication.firebasestorage.app",
+  messagingSenderId: "1056778348399",
+  appId: "1:1056778348399:web:e7856cd79b2db269402a9a"
+};
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
+        // Password Portal Guru (Default: 1234)
+        const GURU_PASSWORD = "1234";
+
+        window.loginGuru = function() {
+            const pwd = document.getElementById('passInput').value;
+            if(pwd === GURU_PASSWORD) {
+                document.getElementById('authOverlay').style.display = 'none';
+            } else {
+                alert("Password Salah!");
+            }
+        };
+
         // State Token
         let activeToken = localStorage.getItem('nokia_teacher_token') || generateNewToken();
-
         document.getElementById('tokenDisplay').innerText = activeToken;
-
-        // Sync Token Awal ke Firebase
         set(ref(db, 'room_session/active_token'), activeToken);
 
         function generateNewToken() {
@@ -221,9 +260,8 @@
             return token;
         }
 
-        // Window Function: Regenerate Token Sesi
         window.resetToken = function() {
-            if(confirm("Regenerate token baru? Token lama tidak akan berlaku lagi untuk siswa!")) {
+            if(confirm("Regenerate token baru? Token lama tidak berlaku lagi.")) {
                 activeToken = generateNewToken();
                 document.getElementById('tokenDisplay').innerText = activeToken;
                 set(ref(db, 'room_session/active_token'), activeToken);
@@ -231,18 +269,61 @@
             }
         };
 
-        // Window Function: Kirim Soal Live
-        window.sendQuestion = function() {
-            const qText = document.getElementById('questionInput').value.trim();
-            if(!qText) {
-                alert("Ketik pertanyaan terlebih dahulu!");
+        // Kelola Peserta
+        window.addPlayer = function() {
+            const nameInput = document.getElementById('newPlayerName');
+            const name = nameInput.value.trim();
+            if(!name) return alert("Masukkan nama kelompok!");
+
+            const pin = Math.floor(1000 + Math.random() * 9000).toString();
+
+            set(ref(db, 'players/' + name), {
+                playerName: name,
+                pin: pin,
+                pulsa: 10000
+            });
+
+            nameInput.value = "";
+        };
+
+        window.deletePlayer = function(playerName) {
+            if(confirm(`Hapus kelompok ${playerName}?`)) {
+                remove(ref(db, 'players/' + playerName));
+            }
+        };
+
+        // Realtime Listener: Tabel Peserta & PIN
+        onValue(ref(db, 'players'), (snapshot) => {
+            const data = snapshot.val();
+            const tbody = document.getElementById('playerTableBody');
+            tbody.innerHTML = "";
+
+            if (!data) {
+                tbody.innerHTML = "<tr><td colspan='4' style='text-align:center; color:#94a3b8;'>Belum ada kelompok terdaftar.</td></tr>";
                 return;
             }
+
+            Object.keys(data).forEach(key => {
+                const p = data[key];
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><b>${p.playerName}</b></td>
+                    <td><code style="color:#facc15; font-weight:bold;">${p.pin}</code></td>
+                    <td>Rp${(p.pulsa || 0).toLocaleString('id-ID')}</td>
+                    <td><button class="btn btn-danger btn-sm" onclick="deletePlayer('${p.playerName}')">Hapus</button></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        });
+
+        // Kirim Soal Live
+        window.sendQuestion = function() {
+            const qText = document.getElementById('questionInput').value.trim();
+            if(!qText) return alert("Ketik pertanyaan terlebih dahulu!");
 
             set(ref(db, 'room_session/current_question'), qText);
             set(ref(db, 'room_session/timestamp'), new Date().toLocaleTimeString());
 
-            // Kirim sinyal broadcast soal
             const channel = new BroadcastChannel('nokia_3310_channel');
             channel.postMessage({ type: 'BROADCAST_SOAL', questionText: qText });
 
@@ -250,16 +331,15 @@
             alert("Soal berhasil dikirim ke seluruh HP Siswa!");
         };
 
-        // Window Function: Reset Inbox Data
+        // Clear Inbox
         window.clearInbox = function() {
             if(confirm("Hapus seluruh daftar inbox jawaban siswa?")) {
                 remove(ref(db, 'submissions'));
             }
         };
 
-        // Realtime Listener: Inbox SMS Jawaban Masuk
-        const inboxRef = ref(db, 'submissions');
-        onValue(inboxRef, (snapshot) => {
+        // Realtime Listener: Inbox SMS
+        onValue(ref(db, 'submissions'), (snapshot) => {
             const data = snapshot.val();
             const tbody = document.getElementById('inboxTableBody');
             tbody.innerHTML = "";
@@ -269,13 +349,11 @@
                 return;
             }
 
-            // Convert Object to Array & Sort by Timestamp
             const items = Object.keys(data).map(key => ({ id: key, ...data[key] }));
-            items.reverse(); // Terbaru di atas
+            items.reverse();
 
             items.forEach(item => {
                 const tr = document.createElement('tr');
-                
                 let actionHtml = '-';
                 if (item.status === 'PENDING') {
                     actionHtml = `
@@ -298,16 +376,14 @@
             });
         });
 
-        // Window Function: Keputusan Guru (ACC / TOLAK)
+        // Verdict ACC / TOLAK
         window.verdict = function(subId, status, playerName, currentPulsa) {
-            // Update status submission di Firebase
             update(ref(db, 'submissions/' + subId), { status: status });
 
             const channel = new BroadcastChannel('nokia_3310_channel');
 
             if (status === 'ACC') {
                 const BONUS_PULSA = 5000;
-                // Broadcast hasil ACC ke HP Siswa
                 channel.postMessage({
                     type: 'VERDICT_RESULT',
                     playerName: playerName,
@@ -315,7 +391,6 @@
                     bonus: BONUS_PULSA
                 });
 
-                // Update data pulsa player di Firebase jika ada
                 update(ref(db, 'players/' + playerName), {
                     pulsa: currentPulsa + BONUS_PULSA
                 });
@@ -335,6 +410,16 @@
 </head>
 <body>
 
+    <!-- OVERLAY AUTHENTICATION GURU -->
+    <div class="auth-overlay" id="authOverlay">
+        <div class="auth-card">
+            <h2>🔒 AKSES GURU</h2>
+            <p style="font-size: 0.85rem; color: #94a3b8; margin-bottom: 15px;">Masukkan Password Guru untuk melanjutkan:</p>
+            <input type="password" id="passInput" placeholder="Password (Default: 1234)" style="width: 100%; margin-bottom: 15px;" onkeypress="if(event.key==='Enter') loginGuru()">
+            <button class="btn" style="width: 100%;" onclick="loginGuru()">MASUK DASHBOARD</button>
+        </div>
+    </div>
+
     <div class="header-nav">
         <a href="../index.html" class="btn-back">← Portal Utama</a>
         <div style="font-size: 0.85rem; color: #38bdf8;">Mode: Dashboard Guru</div>
@@ -348,15 +433,15 @@
             <div class="panel">
                 <h3>🔑 Token Sesi Kelas (Keamanan)</h3>
                 <p style="font-size: 0.85rem; color: #94a3b8; margin-bottom: 10px;">
-                    Siswa wajib memasukkan token ini saat memasukkan ID kelompok mereka.
+                    Siswa wajib memasukkan token ini saat masuk.
                 </p>
                 <div class="token-box">
                     <span class="token-text" id="tokenDisplay">LOADING...</span>
-                    <button class="btn btn-sm" onclick="resetToken()">Acak Token Baru</button>
+                    <button class="btn btn-sm" onclick="resetToken()">Acak Token</button>
                 </div>
             </div>
 
-            <!-- Panel Status Soal Aktif -->
+            <!-- Panel Soal Aktif -->
             <div class="panel">
                 <h3>📌 Soal Aktif Saat Ini</h3>
                 <p style="font-size: 0.85rem; color: #94a3b8; margin-bottom: 6px;">Teks Soal di Layar Siswa & Display:</p>
@@ -366,11 +451,35 @@
             </div>
         </div>
 
+        <!-- Panel Kelola Peserta & PIN -->
+        <div class="panel">
+            <h3>👥 Kelola Kelompok Siswa & PIN Unik</h3>
+            <div class="input-group" style="margin-bottom: 12px;">
+                <input type="text" id="newPlayerName" placeholder="Ketik Nama Kelompok (cth: Kelompok 1 - IPA)">
+                <button class="btn" onclick="addPlayer()">+ Tambah Kelompok</button>
+            </div>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nama Kelompok</th>
+                            <th>PIN Rahasia</th>
+                            <th>Pulsa Saat Ini</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="playerTableBody">
+                        <tr><td colspan="4" style="text-align:center; color:#94a3b8;">Memuat data peserta...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
         <!-- Panel Input Soal Live -->
-        <div class="panel" style="margin-bottom: 20px;">
+        <div class="panel">
             <h3>✉ Kirim Soal Spontan (Live Broadcast)</h3>
             <div class="input-group">
-                <input type="text" id="questionInput" placeholder="Ketik soal pelajaran di sini (cth: Zat hijau daun disingkat...)" onkeypress="if(event.key==='Enter') sendQuestion()">
+                <input type="text" id="questionInput" placeholder="Ketik soal pelajaran di sini..." onkeypress="if(event.key==='Enter') sendQuestion()">
                 <button class="btn" onclick="sendQuestion()">KIRIM SOAL</button>
             </div>
         </div>
@@ -395,9 +504,7 @@
                         </tr>
                     </thead>
                     <tbody id="inboxTableBody">
-                        <tr>
-                            <td colspan="6" style="text-align:center; color:#94a3b8;">Menghubungkan ke server database...</td>
-                        </tr>
+                        <tr><td colspan="6" style="text-align:center; color:#94a3b8;">Menghubungkan ke server database...</td></tr>
                     </tbody>
                 </table>
             </div>

@@ -297,7 +297,6 @@
         let currentCostPerChar = 250;
         let currentAccBonus = 5000;
 
-        // Sync awal config ke Firebase
         set(ref(db, 'room_session/config'), {
             costPerChar: currentCostPerChar,
             accBonus: currentAccBonus
@@ -320,7 +319,7 @@
             alert("Pengaturan Ekonomi berhasil diperbarui!");
         };
 
-        // --- KELOLA PESERTA & SESSION KILL ---
+        // --- KELOLA PESERTA & PENGHAPUSAN BERSIH ---
         window.addPlayer = function() {
             const nameInput = document.getElementById('newPlayerName');
             const name = nameInput.value.trim();
@@ -331,8 +330,7 @@
             set(ref(db, 'players/' + name), {
                 playerName: name,
                 pin: pin,
-                pulsa: 10000,
-                status: 'ACTIVE'
+                pulsa: 10000
             });
 
             nameInput.value = "";
@@ -340,16 +338,11 @@
 
         window.deletePlayer = function(playerName) {
             if(confirm(`Hapus kelompok ${playerName}? Akses HP kelompok ini akan terputus otomatis!`)) {
-                // Tandai status DELETED terlebih dahulu agar HP siswa menangkap sinyal forced logout
-                set(ref(db, 'players/' + playerName + '/status'), 'DELETED').then(() => {
-                    setTimeout(() => {
-                        remove(ref(db, 'players/' + playerName));
-                    }, 500);
-                });
+                remove(ref(db, 'players/' + playerName));
             }
         };
 
-        // Realtime Listener: Tabel Peserta & PIN
+        // Realtime Listener: Tabel Peserta & PIN (Anti-Undefined)
         onValue(ref(db, 'players'), (snapshot) => {
             const data = snapshot.val();
             const tbody = document.getElementById('playerTableBody');
@@ -360,19 +353,25 @@
                 return;
             }
 
+            let hasValidPlayer = false;
             Object.keys(data).forEach(key => {
                 const p = data[key];
-                if (p.status !== 'DELETED') {
+                if (p && p.playerName) {
+                    hasValidPlayer = true;
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
                         <td><b>${p.playerName}</b></td>
-                        <td><code style="color:#facc15; font-weight:bold;">${p.pin}</code></td>
+                        <td><code style="color:#facc15; font-weight:bold;">${p.pin || '----'}</code></td>
                         <td>Rp${(p.pulsa || 0).toLocaleString('id-ID')}</td>
                         <td><button class="btn btn-danger btn-sm" onclick="deletePlayer('${p.playerName}')">Hapus</button></td>
                     `;
                     tbody.appendChild(tr);
                 }
             });
+
+            if (!hasValidPlayer) {
+                tbody.innerHTML = "<tr><td colspan='4' style='text-align:center; color:#94a3b8;'>Belum ada kelompok terdaftar.</td></tr>";
+            }
         });
 
         // --- SOAL AKTIF & KOREKSI INBOX ---
@@ -522,7 +521,7 @@
 
         <!-- Tabel Kelompok Terdaftar -->
         <div class="panel">
-            <h3>📋 DAFTAR KELOMPOK & PIN AKSE S</h3>
+            <h3>📋 DAFTAR KELOMPOK & PIN AKSES</h3>
             <div class="table-responsive">
                 <table>
                     <thead>
@@ -553,4 +552,6 @@
             </div>
         </div>
 
-        <!-- Panel Inbox SMS J
+        <!-- Panel Inbox SMS Jawaban -->
+        <div class="panel">
+            <div style="

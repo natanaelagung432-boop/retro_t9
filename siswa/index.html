@@ -128,7 +128,6 @@
             overflow-y: auto;
         }
 
-        /* Draft box muat 3 baris */
         .draft-box {
             font-size: 1.25rem;
             word-break: break-all;
@@ -212,7 +211,6 @@
             box-shadow: 0 2px 0 #b91c1c;
         }
 
-        /* Progress bar untuk indikator hold 3 detik */
         .clear-progress {
             position: absolute;
             bottom: 0;
@@ -330,7 +328,7 @@
             <div class="navi-row">
                 <button class="btn-clear" id="btnClear" 
                     ontouchstart="startClearHold(event)" onmousedown="startClearHold(event)"
-                    ontouchend="cancelClearHold()" onmouseup="cancelClearHold()" onmouseleave="cancelClearHold()">
+                    ontouchend="cancelClearHold(event)" onmouseup="cancelClearHold(event)" onmouseleave="cancelClearHold(event)">
                     C (Tahan 3dtk)
                     <div class="clear-progress" id="clearProgress"></div>
                 </button>
@@ -405,17 +403,16 @@
     </div>
 
     <script>
-        // Data & Variable Game
-        const COST_PER_CHAR = 250; // Diturunkan dari 350 ke 250
+        const COST_PER_CHAR = 250;
         let playerName = localStorage.getItem('nokia_player_name') || 'Kelompok ' + Math.floor(Math.random() * 90 + 10);
         let pulsa = parseInt(localStorage.getItem('nokia_pulsa_' + playerName)) || 10000;
         
         let draft = "";
-        let isUpperCase = false; // Default huruf kecil
+        let isUpperCase = false; 
         let currentKey = null;
         let keyIndex = 0;
         let keyTimer = null;
-        const MULTITAP_TIMEOUT = 800; // ms
+        const MULTITAP_TIMEOUT = 800;
 
         const keyMap = {
             '1': ['.', ',', '?', '!'],
@@ -453,14 +450,12 @@
             setTimeout(() => playBeep(1200, 0.2), 240);
         }
 
-        // Toggle Huruf Kapital / Kecil via Tombol #
         function toggleCase() {
             isUpperCase = !isUpperCase;
             document.getElementById('caseIndicator').innerText = isUpperCase ? 'ABC' : 'abc';
             playBeep(900, 0.06);
         }
 
-        // T9 Engine Logic
         function pressKey(key) {
             playBeep(700, 0.04);
             if (navigator.vibrate) navigator.vibrate(20);
@@ -496,44 +491,49 @@
             updateDraftUI();
         }
 
-        // Tombol C: Ketuk biasa = hapus 1 karakter terakhir
-        // Tahan 3 detik = hapus semua
         let clearHoldTimer = null;
         let progressTimer = null;
         let holdStartTime = 0;
+        let isHolding = false;
 
         function startClearHold(e) {
             e.preventDefault();
             commitKey();
+            isHolding = true;
             
             const progressBar = document.getElementById('clearProgress');
             progressBar.style.width = '0%';
             holdStartTime = Date.now();
 
-            // Animasi progress bar selama 3 detik
             progressTimer = setInterval(() => {
+                if (!isHolding) return;
                 let elapsed = Date.now() - holdStartTime;
                 let pct = Math.min((elapsed / 3000) * 100, 100);
                 progressBar.style.width = pct + '%';
             }, 50);
 
-            // Trigger hapus semua setelah 3 detik
             clearHoldTimer = setTimeout(() => {
-                cancelClearHold();
-                draft = "";
-                updateDraftUI();
-                playBeep(300, 0.2);
-                if (navigator.vibrate) navigator.vibrate([50, 50, 50]);
+                if (isHolding) {
+                    isHolding = false;
+                    clearInterval(progressTimer);
+                    document.getElementById('clearProgress').style.width = '0%';
+                    draft = "";
+                    updateDraftUI();
+                    playBeep(300, 0.2);
+                    if (navigator.vibrate) navigator.vibrate([50, 50, 50]);
+                }
             }, 3000);
         }
 
-        function cancelClearHold() {
+        function cancelClearHold(e) {
+            if (!isHolding) return;
+            isHolding = false;
             clearTimeout(clearHoldTimer);
             clearInterval(progressTimer);
             document.getElementById('clearProgress').style.width = '0%';
 
-            // Jika ditekan sebentar (kurang dari 3 detik), anggap sebagai hapus 1 karakter
-            if (holdStartTime && (Date.now() - holdStartTime < 800)) {
+            let duration = Date.now() - holdStartTime;
+            if (duration < 800) {
                 playBeep(400, 0.05);
                 if (draft.length > 0) {
                     draft = draft.slice(0, -1);
@@ -601,4 +601,7 @@
                     updatePulsaDisplay();
                     alert("🎉 SELAMAT! Jawabanmu BENAR (ACC)! Bonus Pulsa +Rp" + data.bonus.toLocaleString('id-ID'));
                     playRingtone();
-                } e
+                } else if (data.status === 'REJECT') {
+                    alert("❌ JAWABAN SALAH! Coba susun jawaban lain.");
+                    playBeep(300, 0.3);
+     

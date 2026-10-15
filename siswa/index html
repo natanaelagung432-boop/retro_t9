@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Nokia 3310 - Keypad Siswa</title>
+    <!-- Font Pixel Monokrom & Retro -->
+    <link href="https://fonts.googleapis.com/css2?family=VT323&family=Press+Start+2P&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --nokia-casing: #2b3a4a;
+            --nokia-bezel: #d0d7de;
+            --lcd-bg: #87a96b;
+            --lcd-text: #112211;
+            --btn-bg: #e2e8f0;
+            --btn-active: #cbd5e1;
+            --btn-navi: #0284c7;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Share Tech Mono', monospace;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body {
+            background-color: #0f172a;
+            color: #f8fafc;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+        }
+
+        .header-nav {
+            margin-bottom: 10px;
+            width: 100%;
+            max-width: 360px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .btn-back {
+            background-color: #334155;
+            color: #94a3b8;
+            text-decoration: none;
+            padding: 5px 12px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            border: 1px solid #475569;
+        }
+
+        .player-info {
+            font-size: 0.85rem;
+            color: #38bdf8;
+            font-weight: bold;
+        }
+
+        /* Mockup HP Nokia 3310 */
+        .phone-body {
+            width: 100%;
+            max-width: 350px;
+            background-color: var(--nokia-casing);
+            border-radius: 36px 36px 48px 48px;
+            padding: 20px 18px 30px 18px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.6), inset 0 2px 4px rgba(255,255,255,0.2);
+            border: 4px solid #1e293b;
+            position: relative;
+        }
+
+        .brand-logo {
+            text-align: center;
+            font-family: 'Press Start 2P', monospace;
+            font-size: 0.9rem;
+            color: #94a3b8;
+            letter-spacing: 3px;
+            margin-bottom: 12px;
+        }
+
+        /* Screen Display LCD */
+        .lcd-screen {
+            background-color: var(--lcd-bg);
+            color: var(--lcd-text);
+            border: 6px solid #1a2512;
+            border-radius: 12px;
+            padding: 10px;
+            font-family: 'VT323', monospace;
+            height: 190px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .lcd-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 1.1rem;
+            border-bottom: 2px dashed #334e23;
+            padding-bottom: 2px;
+            font-weight: bold;
+        }
+
+        .lcd-content {
+            flex-grow: 1;
+            margin: 6px 0;
+            overflow-y: auto;
+        }
+
+        .question-box {
+            font-size: 1.15rem;
+            line-height: 1.1;
+            margin-bottom: 6px;
+            background: rgba(0,0,0,0.05);
+            padding: 4px;
+            border-radius: 4px;
+        }
+
+        .draft-box {
+            font-size: 1.3rem;
+            word-break: break-all;
+            min-height: 32px;
+            background: rgba(255,255,255,0.2);
+            padding: 4px;
+            border: 1px solid #334e23;
+        }
+
+        .cursor {
+            display: inline-block;
+            width: 8px;
+            height: 16px;
+            background-color: var(--lcd-text);
+            animation: blink 0.8s infinite;
+        }
+
+        @keyframes blink { 50% { opacity: 0; } }
+
+        .lcd-footer {
+            display: flex;
+            justify-content: space-between;
+            font-size: 1rem;
+            border-top: 1px solid #334e23;
+            padding-top: 2px;
+        }
+
+        /* Keypad Layout */
+        .keypad-container {
+            margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .navi-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 10px;
+        }
+
+        .btn-navi {
+            background-color: var(--btn-navi);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9rem;
+            box-shadow: 0 4px 0 #0369a1;
+            cursor: pointer;
+            width: 60%;
+        }
+
+        .btn-navi:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 #0369a1;
+        }
+
+        .btn-clear {
+            background-color: #ef4444;
+            color: white;
+            border: none;
+            padding: 12px 18px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.85rem;
+            box-shadow: 0 4px 0 #b91c1c;
+            cursor: pointer;
+        }
+
+        .btn-clear:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 #b91c1c;
+        }
+
+        .num-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .key-btn {
+            background-color: var(--btn-bg);
+            color: #0f172a;
+            border: none;
+            border-radius: 16px;
+            padding: 10px 4px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 0 #94a3b8;
+            cursor: pointer;
+        }
+
+        .key-btn:active {
+            background-color: var(--btn-active);
+            transform: translateY(3px);
+            box-shadow: 0 1px 0 #94a3b8;
+        }
+
+        .key-num {
+            font-size: 1.2rem;
+            font-weight: bold;
+            line-height: 1;
+        }
+
+        .key-sub {
+            font-size: 0.65rem;
+            color: #475569;
+            margin-top: 2px;
+            height: 10px;
+        }
+
+        /* Panduan Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            justify-content: center;
+            align-items: center;
+            z-index: 99;
+            padding: 20px;
+        }
+
+        .modal-content {
+            background: #1e293b;
+            border: 2px solid #38bdf8;
+            border-radius: 12px;
+            padding: 20px;
+            max-width: 320px;
+            color: #e2e8f0;
+            font-size: 0.85rem;
+        }
+
+        .modal-content h3 { color: #38bdf8; margin-bottom: 10px; }
+        .modal-content ul { padding-left: 20px; margin-bottom: 15px; }
+        .btn-close {
+            background: #38bdf8; color: #0f172a; border: none;
+            padding: 6px 12px; border-radius: 6px; font-weight: bold; cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header-nav">
+        <a href="../index.html" class="btn-back">← Portal</a>
+        <div class="player-info" id="playerDisplay">Siswa: -</div>
+    </div>
+
+    <!-- NOKIA 3310 BODY -->
+    <div class="phone-body">
+        <div class="brand-logo">NOKIA</div>
+
+        <!-- LCD DISPLAY -->
+        <div class="lcd-screen" id="lcdScreen">
+            <div class="lcd-header">
+                <span>✉ SMS</span>
+                <span id="pulsaDisplay">Rp10.000</span>
+            </div>
+
+            <div class="lcd-content">
+                <div class="question-box" id="questionBox">Menunggu soal dari Guru...</div>
+                <div style="font-size: 0.9rem; margin-top: 4px;">DRAFT JAWABAN:</div>
+                <div class="draft-box">
+                    <span id="draftText"></span><span class="cursor"></span>
+                </div>
+            </div>
+
+            <div class="lcd-footer">
+                <span id="charCount">0 Krkt</span>
+                <span id="costCalc">Biaya: Rp0</span>
+            </div>
+        </div>
+
+        <!-- KEYPAD -->
+        <div class="keypad-container">
+            <!-- Navigation Row -->
+            <div class="navi-row">
+                <button class="btn-clear" onclick="clearChar()">C (Hapus)</button>
+                <button class="btn-navi" onclick="sendSMS()">KIRIM SMS</button>
+            </div>
+
+            <!-- Number Grid -->
+            <div class="num-grid">
+                <button class="key-btn" onclick="pressKey('1')">
+                    <span class="key-num">1</span>
+                    <span class="key-sub">.,?!</span>
+                </button>
+                <button class="key-btn" onclick="pressKey('2')">
+                    <span class="key-num">2</span>
+                    <span class="key-sub">ABC</span>
+                </button>
+                <button class="key-btn" onclick="pressKey('3')">
+                    <span class="key-num">3</span>
+                    <span class="key-sub">DEF</span>
+                </button>
+                <button class="key-btn" onclick="pressKey('4')">
+                    <span class="key-num">4</span>
+                    <span class="key-sub">GHI</span>
+                </button>
+                <button class="key-btn" onclick="pressKey('5')">
+                    <span class="key-num">5</span>
+                    <span class="key-sub">JKL</span>
+                </button>
+                <button class="key-btn" onclick="pressKey('6')">
+                    <span class="key-num">6</span>
+                    <span class="key-sub">MNO</span>
+                </button>
+                <button class="key-btn" onclick="pressKey('7')">
+                    <span class="key-num">7</span>
+                    <span class="key-sub">PQRS</span>
+                </button>
+                <button class="key-btn" onclick="pressKey('8')">
+                    <span class="key-num">8</span>
+                    <span class="key-sub">TUV</span>
+                </button>
+                <button class="key-btn" onclick="pressKey('9')">
+                    <span class="key-num">9</span>
+                    <span class="key-sub">WXYZ</span>
+                </button>
+                <button class="key-btn" onclick="openGuide()">
+                    <span class="key-num">?</span>
+                    <span class="key-sub">INFO</span>
+                </button>
+                <button class="key-btn" onclick="pressKey('0')">
+                    <span class="key-num">0</span>
+                    <span class="key-sub">[Spasi]</span>
+                </button>
+                <button class="key-btn" onclick="pressKey('#')">
+                    <span class="key-num">#</span>
+                    <span class="key-sub">⇧ / aA</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL PANDUAN -->
+    <div class="modal" id="guideModal">
+        <div class="modal-content">
+            <h3>📖 Panduan T9 & Aturan</h3>
+            <ul>
+                <li>Setiap karakter diketik memotong <b>Rp350 Pulsa</b> saat dikirim.</li>
+                <li>Gunakan singkatan masuk akal agar hemat pulsa (cth: <i>KLRF</i> untuk Klorofil).</li>
+                <li>Tekan tombol cepat untuk memilih huruf (cth: tekan '2' dua kali untuk huruf 'B').</li>
+            </ul>
+            <button class="btn-close" onclick="closeGuide()">Tutup</button>
+        </div>
+    </div>
+
+    <script>
+        // Data & Variable Game
+        const COST_PER_CHAR = 350;
+        let playerName = localStorage.getItem('nokia_player_name') || 'Kelompok ' + Math.floor(Math.random() * 90 + 10);
+        let pulsa = parseInt(localStorage.getItem('nokia_pulsa_' + playerName)) || 10000;
+        
+        let draft = "";
+        let currentKey = null;
+        let keyIndex = 0;
+        let keyTimer = null;
+        const MULTITAP_TIMEOUT = 800; // ms
+
+        const keyMap = {
+            '1': ['.', ',', '?', '!'],
+            '2': ['A', 'B', 'C'],
+            '3': ['D', 'E', 'F'],
+            '4': ['G', 'H', 'I'],
+            '5': ['J', 'K', 'L'],
+            '6': ['M', 'N', 'O'],
+            '7': ['P', 'Q', 'R', 'S'],
+            '8': ['T', 'U', 'V'],
+            '9': ['W', 'X', 'Y', 'Z'],
+            '0': [' ']
+        };
+
+        // BroadcastChannel untuk Sync antar Tab/Page secara Realtime
+        const channel = new BroadcastChannel('nokia_3310_channel');
+
+        // Init State
+        document.getElementById('playerDisplay').innerText = "ID: " + playerName;
+        updatePulsaDisplay();
+
+        // Audio Synth untuk Bip Retro
+        function playBeep(freq = 600, duration = 0.05) {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(freq, ctx.currentTime);
+                osc.connect(ctx.destination);
+                osc.start();
+                osc.stop(ctx.currentTime + duration);
+            } catch(e){}
+        }
+
+        function playRingtone() {
+            playBeep(800, 0.1);
+            setTimeout(() => playBeep(1000, 0.1), 120);
+            setTimeout(() => playBeep(1200, 0.2), 240);
+        }
+
+        // T9 Engine Logic
+        function pressKey(key) {
+            playBeep(700, 0.04);
+            if (navigator.vibrate) navigator.vibrate(20);
+
+            if (!keyMap[key]) return;
+
+            const chars = keyMap[key];
+
+            if (currentKey === key) {
+                // Ketukan berturut-turut pada tombol yang sama
+                keyIndex = (keyIndex + 1) % chars.length;
+                draft = draft.slice(0, -1) + chars[keyIndex];
+            } else {
+                // Tombol baru ditekan
+                commitKey();
+                currentKey = key;
+                keyIndex = 0;
+                draft += chars[keyIndex];
+            }
+
+            updateDraftUI();
+
+            clearTimeout(keyTimer);
+            keyTimer = setTimeout(() => {
+                commitKey();
+            }, MULTITAP_TIMEOUT);
+        }
+
+        function commitKey() {
+            currentKey = null;
+            keyIndex = 0;
+            updateDraftUI();
+        }
+
+        function clearChar() {
+            playBeep(400, 0.05);
+            commitKey();
+            if (draft.length > 0) {
+                draft = draft.slice(0, -1);
+                updateDraftUI();
+            }
+        }
+
+        function updateDraftUI() {
+            document.getElementById('draftText').innerText = draft;
+            const charCount = draft.length;
+            const estCost = charCount * COST_PER_CHAR;
+
+            document.getElementById('charCount').innerText = charCount + " Krkt";
+            document.getElementById('costCalc').innerText = "Biaya: Rp" + estCost.toLocaleString('id-ID');
+        }
+
+        function updatePulsaDisplay() {
+            document.getElementById('pulsaDisplay').innerText = "Rp" + pulsa.toLocaleString('id-ID');
+            localStorage.setItem('nokia_pulsa_' + playerName, pulsa);
+        }
+
+        function sendSMS() {
+            commitKey();
+            if (draft.trim() === "") {
+                alert("Draft jawaban masih kosong!");
+                return;
+            }
+
+            const cost = draft.length * COST_PER_CHAR;
+            if (pulsa < cost) {
+                alert("Pulsa tidak cukup untuk mengirim SMS ini!");
+                return;
+            }
+
+            // Potong pulsa
+            pulsa -= cost;
+            updatePulsaDisplay();
+
+            // Kirim pesan ke Guru & Display lewat BroadcastChannel
+            channel.postMessage({
+                type: 'SUBMIT_ANSWER',
+                playerName: playerName,
+                answerText: draft,
+                charCount: draft.length,
+                costDeducted: cost,
+                remainingPulsa: pulsa,
+                timestamp: new Date().toLocaleTimeString()
+            });
+
+            playBeep(1000, 0.15);
+            alert("SMS Jawaban Terkirim! Pulsa terpotong Rp" + cost.toLocaleString('id-ID'));
+            
+            // Reset Draft
+            draft = "";
+            updateDraftUI();
+        }
+
+        // Listen Soal dari Guru
+        channel.onmessage = (event) => {
+            const data = event.data;
+            if (data.type === 'BROADCAST_SOAL') {
+                document.getElementById('questionBox').innerText = "SOAL: " + data.questionText;
+                playRingtone();
+            } else if (data.type === 'VERDICT_RESULT' && data.playerName === playerName) {
+                if (data.status === 'ACC') {
+                    pulsa += data.bonus;
+                    updatePulsaDisplay();
+                    alert("🎉 SELAMAT! Jawabanmu BENAR (ACC)! Bonus Pulsa +Rp" + data.bonus.toLocaleString('id-ID'));
+                    playRingtone();
+                } else if (data.status === 'REJECT') {
+                    alert("❌ JAWABAN SALAH! Coba susun jawaban lain.");
+                    playBeep(300, 0.3);
+                }
+            }
+        };
+
+        function openGuide() { document.getElementById('guideModal').style.display = 'flex'; }
+        function closeGuide() { document.getElementById('guideModal').style.display = 'none'; }
+    </script>
+</body>
+</html>

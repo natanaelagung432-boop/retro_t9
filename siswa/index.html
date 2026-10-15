@@ -153,11 +153,6 @@
             font-size: 0.8rem;
         }
 
-        .question-banner span {
-            color: #38bdf8;
-            font-weight: bold;
-        }
-
         /* Keypad Nokia Layout */
         .keypad {
             width: 100%;
@@ -240,9 +235,9 @@
         // State Sesi Siswa
         let currentGroup = localStorage.getItem('nokia_group_name') || "";
         let currentPulsa = parseInt(localStorage.getItem('nokia_group_pulsa')) || 10000;
-        let costPerChar = 250; // Dynamic default
+        let costPerChar = 250;
 
-        // Load Dropdown List Kelompok
+        // Load Dropdown List Kelompok (Anti-Undefined)
         const dbRef = ref(db);
         window.loadGroups = function() {
             get(child(dbRef, 'players')).then((snapshot) => {
@@ -251,10 +246,11 @@
                 if (snapshot.exists()) {
                     const groups = snapshot.val();
                     Object.keys(groups).forEach(gName => {
-                        if (groups[gName].status !== 'DELETED') {
+                        const gData = groups[gName];
+                        if (gData && gData.playerName) {
                             const opt = document.createElement('option');
-                            opt.value = gName;
-                            opt.textContent = gName;
+                            opt.value = gData.playerName;
+                            opt.textContent = gData.playerName;
                             selectEl.appendChild(opt);
                         }
                     });
@@ -263,7 +259,7 @@
         };
         window.loadGroups();
 
-        // 1. REALTIME LISTENER CONFIG EKONOMI
+        // 1. REALTIME CONFIG EKONOMI
         onValue(ref(db, 'room_session/config'), (snapshot) => {
             if (snapshot.exists()) {
                 const config = snapshot.val();
@@ -271,18 +267,19 @@
             }
         });
 
-        // 2. CEK AUTO-LOGIN & SESSION WATCHER
+        // 2. SESSION WATCHER (Auto Logout jika kelompok dihapus guru)
         function initSessionWatcher(groupName) {
             onValue(ref(db, 'players/' + groupName), (snapshot) => {
-                if (!snapshot.exists() || snapshot.val().status === 'DELETED') {
-                    // SESSION KILL: Jika kelompok dihapus guru, panggil forced logout
+                if (!snapshot.exists() || snapshot.val() === null) {
                     alert("⚠️ Akses kelompok Anda telah dihapus oleh guru.");
                     logoutSiswa();
                 } else {
                     const data = snapshot.val();
-                    currentPulsa = data.pulsa;
-                    localStorage.setItem('nokia_group_pulsa', currentPulsa);
-                    document.getElementById('displayPulsa').innerText = currentPulsa.toLocaleString('id-ID');
+                    if (data && data.pulsa !== undefined) {
+                        currentPulsa = data.pulsa;
+                        localStorage.setItem('nokia_group_pulsa', currentPulsa);
+                        document.getElementById('displayPulsa').innerText = currentPulsa.toLocaleString('id-ID');
+                    }
                 }
             });
         }
@@ -314,19 +311,20 @@
 
             // Validasi PIN Kelompok
             const groupSnap = await get(child(dbRef, 'players/' + groupName));
-            if (!groupSnap.exists() || groupSnap.val().status === 'DELETED') {
+            if (!groupSnap.exists()) {
                 alert("Kelompok tidak ditemukan!");
                 return;
             }
 
-            if (groupSnap.val().pin !== inputPin) {
+            const groupData = groupSnap.val();
+            if (groupData.pin !== inputPin) {
                 alert("PIN Kelompok salah!");
                 return;
             }
 
             // Login Berhasil
             currentGroup = groupName;
-            currentPulsa = groupSnap.val().pulsa || 10000;
+            currentPulsa = groupData.pulsa || 10000;
 
             localStorage.setItem('nokia_group_name', currentGroup);
             localStorage.setItem('nokia_group_pulsa', currentPulsa);
@@ -346,10 +344,12 @@
             window.loadGroups();
         }
 
-        // 4. REALTIME LISTEN SOAL AKTIF
+        // 4. REALTIME LISTENER SOAL AKTIF
         onValue(ref(db, 'room_session/current_question'), (snapshot) => {
             const q = snapshot.val();
-            document.getElementById('activeQuestionBox').innerText = q ? q : "Menunggu soal dikirim guru...";
+            document.getElementById('activeQuestionBox').innerText = (q && q.trim() !== "") 
+                ? q 
+                : "Menunggu soal dikirim guru...";
         });
 
         // 5. ENGINE MULTI-TAP KEYPAD T9

@@ -171,7 +171,7 @@
                 : "Menunggu guru mengirim soal...";
         });
 
-        // 3. Realtime Leaderboard Pulsa Kelompok
+        // 3. Realtime Leaderboard Pulsa Kelompok (Anti-Undefined)
         onValue(ref(db, 'players'), (snapshot) => {
             const data = snapshot.val();
             const tbody = document.getElementById('leaderboardBody');
@@ -182,18 +182,21 @@
                 return;
             }
 
-            // Filter kelompok yang tidak berstatus DELETED
-            let players = Object.keys(data)
-                .map(key => data[key])
-                .filter(p => p.status !== 'DELETED');
-
-            // Sort berdasarkan sisa pulsa terbanyak
-            players.sort((a, b) => (b.pulsa || 0) - (a.pulsa || 0));
+            let players = [];
+            Object.keys(data).forEach(key => {
+                const p = data[key];
+                if (p && p.playerName) {
+                    players.push(p);
+                }
+            });
 
             if (players.length === 0) {
                 tbody.innerHTML = "<tr><td colspan='3' style='text-align:center; color:#94a3b8;'>Belum ada kelompok aktif.</td></tr>";
                 return;
             }
+
+            // Sort berdasarkan sisa pulsa terbanyak
+            players.sort((a, b) => (b.pulsa || 0) - (a.pulsa || 0));
 
             players.forEach((p, index) => {
                 const tr = document.createElement('tr');
@@ -206,7 +209,7 @@
             });
         });
 
-        // 4. Realtime Status Kiriman Jawaban
+        // 4. Realtime Status Kiriman Jawaban (Anti-Undefined)
         onValue(ref(db, 'submissions'), (snapshot) => {
             const data = snapshot.val();
             const tbody = document.getElementById('submissionsBody');
@@ -217,21 +220,32 @@
                 return;
             }
 
-            const items = Object.keys(data).map(key => ({ id: key, ...data[key] }));
+            let items = [];
+            Object.keys(data).forEach(key => {
+                const item = data[key];
+                if (item && item.playerName) {
+                    items.push({ id: key, ...item });
+                }
+            });
+
+            if (items.length === 0) {
+                tbody.innerHTML = "<tr><td colspan='4' style='text-align:center; color:#94a3b8;'>Belum ada kelompok yang mengirim jawaban.</td></tr>";
+                return;
+            }
+
             items.reverse();
 
             items.forEach(item => {
                 const tr = document.createElement('tr');
                 
-                // Sensor jawaban jika status masih PENDING
                 let displayText = `<span style="color:#64748b; font-style:italic;">🔒 [Terkunci - Menunggu Penilaian]</span>`;
                 if (item.status === 'ACC' || item.status === 'REJECT') {
-                    displayText = `<code style="color:#38bdf8; font-size:1.05rem;">${item.answerText}</code>`;
+                    displayText = `<code style="color:#38bdf8; font-size:1.05rem;">${item.answerText || ''}</code>`;
                 }
 
                 tr.innerHTML = `
                     <td><b>${item.playerName}</b></td>
-                    <td><span class="badge ${item.status}">${item.status}</span></td>
+                    <td><span class="badge ${item.status || 'PENDING'}">${item.status || 'PENDING'}</span></td>
                     <td>${displayText}</td>
                     <td>${item.timestamp || '-'}</td>
                 `;

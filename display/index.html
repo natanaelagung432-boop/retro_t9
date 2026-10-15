@@ -32,7 +32,7 @@
 
         h1 {
             font-family: 'Press Start 2P', monospace;
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             color: #38bdf8;
             letter-spacing: 2px;
             text-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
@@ -69,7 +69,6 @@
 
         .panel h3 {
             color: #38bdf8;
-            font-size: 1.1rem;
             margin-bottom: 15px;
             border-bottom: 1px solid #334155;
             padding-bottom: 8px;
@@ -88,6 +87,7 @@
             min-height: 80px;
             display: flex;
             align-items: center;
+            border-left: 4px solid #38bdf8;
         }
 
         /* Table Leaderboard & Submissions */
@@ -139,7 +139,7 @@
         }
     </style>
 
-    <!-- Firebase SDK v10 dengan Konfigurasi Proyek Anda -->
+    <!-- Firebase SDK v10 -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
@@ -157,7 +157,7 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // 1. Realtime Token Sesi
+        // 1. Realtime Token Sesi Kelas
         onValue(ref(db, 'room_session/active_token'), (snapshot) => {
             const token = snapshot.val() || "MENUNGGU...";
             document.getElementById('displayToken').innerText = token;
@@ -165,8 +165,10 @@
 
         // 2. Realtime Soal Aktif
         onValue(ref(db, 'room_session/current_question'), (snapshot) => {
-            const q = snapshot.val() || "Belum ada soal aktif yang disiarkan guru.";
-            document.getElementById('displayQuestion').innerText = q;
+            const q = snapshot.val();
+            document.getElementById('displayQuestion').innerText = (q && q.trim() !== "") 
+                ? q 
+                : "Menunggu guru mengirim soal...";
         });
 
         // 3. Realtime Leaderboard Pulsa Kelompok
@@ -180,9 +182,18 @@
                 return;
             }
 
-            // Convert ke Array & Sort berdasarkan pulsa terbanyak
-            let players = Object.keys(data).map(key => data[key]);
+            // Filter kelompok yang tidak berstatus DELETED
+            let players = Object.keys(data)
+                .map(key => data[key])
+                .filter(p => p.status !== 'DELETED');
+
+            // Sort berdasarkan sisa pulsa terbanyak
             players.sort((a, b) => (b.pulsa || 0) - (a.pulsa || 0));
+
+            if (players.length === 0) {
+                tbody.innerHTML = "<tr><td colspan='3' style='text-align:center; color:#94a3b8;'>Belum ada kelompok aktif.</td></tr>";
+                return;
+            }
 
             players.forEach((p, index) => {
                 const tr = document.createElement('tr');
@@ -195,7 +206,7 @@
             });
         });
 
-        // 4. Realtime Status Kiriman & Jawaban Terbuka (Hanya tampil jika ACC / TOLAK)
+        // 4. Realtime Status Kiriman Jawaban
         onValue(ref(db, 'submissions'), (snapshot) => {
             const data = snapshot.val();
             const tbody = document.getElementById('submissionsBody');
@@ -207,14 +218,13 @@
             }
 
             const items = Object.keys(data).map(key => ({ id: key, ...data[key] }));
-            items.reverse(); // Terbaru di atas
+            items.reverse();
 
             items.forEach(item => {
                 const tr = document.createElement('tr');
                 
-                // ATURAN: Jika masih PENGIRIMAN PENDING, sembunyikan teks jawabannya (Sensor ****)
-                // Jawaban baru terbuka secara transparan jika status sudah ACC atau REJECT oleh guru
-                let displayText = `<span style="color:#64748b; font-style:italic;">[Terkunci - Menunggu Penilaian Guru]</span>`;
+                // Sensor jawaban jika status masih PENDING
+                let displayText = `<span style="color:#64748b; font-style:italic;">🔒 [Terkunci - Menunggu Penilaian]</span>`;
                 if (item.status === 'ACC' || item.status === 'REJECT') {
                     displayText = `<code style="color:#38bdf8; font-size:1.05rem;">${item.answerText}</code>`;
                 }
@@ -240,7 +250,7 @@
     </div>
 
     <div class="grid-layout">
-        <!-- Kolom Kiri: Soal & Status Pengiriman Kelompok -->
+        <!-- Kolom Kiri: Soal & Status Pengiriman -->
         <div>
             <!-- Panel Soal Aktif -->
             <div class="panel">
@@ -250,11 +260,11 @@
                 </div>
             </div>
 
-            <!-- Panel Status Pengiriman Jawaban (Live Feed) -->
+            <!-- Panel Status Kiriman & Sensor Jawaban -->
             <div class="panel">
-                <h3>📥 STATUS PENGIRIMAN & JAWABAN KELOMPOK</h3>
+                <h3>📥 STATUS PENGIRIMAN & JAWABAN</h3>
                 <p style="font-size: 0.8rem; color: #94a3b8; margin-bottom: 12px;">
-                    *Teks jawaban kelompok lain akan terbuka otomatis setelah dinilai oleh Guru (ACC / Tolak).
+                    *Jawaban SMS akan terbuka otomatis setelah dinilai oleh Guru (ACC / Tolak).
                 </p>
                 <div class="table-responsive">
                     <table>
@@ -274,7 +284,7 @@
             </div>
         </div>
 
-        <!-- Kolom Kanan: Papan Peringkat (Leaderboard Pulsa) -->
+        <!-- Kolom Kanan: Leaderboard Pulsa -->
         <div>
             <div class="panel">
                 <h3>🏆 LEADERBOARD PULSA KELOMPOK</h3>

@@ -24,6 +24,7 @@
             font-family: 'Share Tech Mono', monospace;
             user-select: none;
             -webkit-user-select: none;
+            -webkit-touch-callout: none;
         }
 
         body {
@@ -83,7 +84,7 @@
             margin-bottom: 12px;
         }
 
-        /* Screen Display LCD - Diperbesar agar muat 3 baris */
+        /* Screen Display LCD */
         .lcd-screen {
             background-color: var(--lcd-bg);
             color: var(--lcd-text);
@@ -232,13 +233,14 @@
             color: #0f172a;
             border: none;
             border-radius: 16px;
-            padding: 10px 4px;
+            padding: 12px 4px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             box-shadow: 0 4px 0 #94a3b8;
             cursor: pointer;
+            touch-action: manipulation;
         }
 
         .key-btn:active {
@@ -251,6 +253,7 @@
             font-size: 1.2rem;
             font-weight: bold;
             line-height: 1;
+            pointer-events: none;
         }
 
         .key-sub {
@@ -258,6 +261,7 @@
             color: #475569;
             margin-top: 2px;
             height: 10px;
+            pointer-events: none;
         }
 
         /* Modal Panduan */
@@ -332,56 +336,56 @@
                     C (Tahan 3dtk)
                     <div class="clear-progress" id="clearProgress"></div>
                 </button>
-                <button class="btn-navi" onclick="sendSMS()">KIRIM SMS</button>
+                <button class="btn-navi" ontouchstart="sendSMS(event)" onclick="sendSMS(event)">KIRIM SMS</button>
             </div>
 
             <!-- Number Grid -->
             <div class="num-grid">
-                <button class="key-btn" onclick="pressKey('1')">
+                <button class="key-btn" ontouchstart="pressKey('1', event)" onclick="pressKey('1', event)">
                     <span class="key-num">1</span>
                     <span class="key-sub">.,?!</span>
                 </button>
-                <button class="key-btn" onclick="pressKey('2')">
+                <button class="key-btn" ontouchstart="pressKey('2', event)" onclick="pressKey('2', event)">
                     <span class="key-num">2</span>
                     <span class="key-sub">abc</span>
                 </button>
-                <button class="key-btn" onclick="pressKey('3')">
+                <button class="key-btn" ontouchstart="pressKey('3', event)" onclick="pressKey('3', event)">
                     <span class="key-num">3</span>
                     <span class="key-sub">def</span>
                 </button>
-                <button class="key-btn" onclick="pressKey('4')">
+                <button class="key-btn" ontouchstart="pressKey('4', event)" onclick="pressKey('4', event)">
                     <span class="key-num">4</span>
                     <span class="key-sub">ghi</span>
                 </button>
-                <button class="key-btn" onclick="pressKey('5')">
+                <button class="key-btn" ontouchstart="pressKey('5', event)" onclick="pressKey('5', event)">
                     <span class="key-num">5</span>
                     <span class="key-sub">jkl</span>
                 </button>
-                <button class="key-btn" onclick="pressKey('6')">
+                <button class="key-btn" ontouchstart="pressKey('6', event)" onclick="pressKey('6', event)">
                     <span class="key-num">6</span>
                     <span class="key-sub">mno</span>
                 </button>
-                <button class="key-btn" onclick="pressKey('7')">
+                <button class="key-btn" ontouchstart="pressKey('7', event)" onclick="pressKey('7', event)">
                     <span class="key-num">7</span>
                     <span class="key-sub">pqrs</span>
                 </button>
-                <button class="key-btn" onclick="pressKey('8')">
+                <button class="key-btn" ontouchstart="pressKey('8', event)" onclick="pressKey('8', event)">
                     <span class="key-num">8</span>
                     <span class="key-sub">tuv</span>
                 </button>
-                <button class="key-btn" onclick="pressKey('9')">
+                <button class="key-btn" ontouchstart="pressKey('9', event)" onclick="pressKey('9', event)">
                     <span class="key-num">9</span>
                     <span class="key-sub">wxyz</span>
                 </button>
-                <button class="key-btn" onclick="openGuide()">
+                <button class="key-btn" ontouchstart="openGuide(event)" onclick="openGuide(event)">
                     <span class="key-num">?</span>
                     <span class="key-sub">INFO</span>
                 </button>
-                <button class="key-btn" onclick="pressKey('0')">
+                <button class="key-btn" ontouchstart="pressKey('0', event)" onclick="pressKey('0', event)">
                     <span class="key-num">0</span>
                     <span class="key-sub">[Spasi]</span>
                 </button>
-                <button class="key-btn" onclick="toggleCase()">
+                <button class="key-btn" ontouchstart="toggleCase(event)" onclick="toggleCase(event)">
                     <span class="key-num">#</span>
                     <span class="key-sub">aA/⇧</span>
                 </button>
@@ -450,13 +454,15 @@
             setTimeout(() => playBeep(1200, 0.2), 240);
         }
 
-        function toggleCase() {
+        function toggleCase(e) {
+            if(e) e.preventDefault();
             isUpperCase = !isUpperCase;
             document.getElementById('caseIndicator').innerText = isUpperCase ? 'ABC' : 'abc';
             playBeep(900, 0.06);
         }
 
-        function pressKey(key) {
+        function pressKey(key, e) {
+            if(e) e.preventDefault();
             playBeep(700, 0.04);
             if (navigator.vibrate) navigator.vibrate(20);
 
@@ -557,7 +563,8 @@
             localStorage.setItem('nokia_pulsa_' + playerName, pulsa);
         }
 
-        function sendSMS() {
+        function sendSMS(e) {
+            if(e) e.preventDefault();
             commitKey();
             if (draft.trim() === "") {
                 alert("Draft jawaban masih kosong!");
@@ -590,18 +597,4 @@
             updateDraftUI();
         }
 
-        channel.onmessage = (event) => {
-            const data = event.data;
-            if (data.type === 'BROADCAST_SOAL') {
-                document.getElementById('questionBox').innerText = "SOAL: " + data.questionText;
-                playRingtone();
-            } else if (data.type === 'VERDICT_RESULT' && data.playerName === playerName) {
-                if (data.status === 'ACC') {
-                    pulsa += data.bonus;
-                    updatePulsaDisplay();
-                    alert("🎉 SELAMAT! Jawabanmu BENAR (ACC)! Bonus Pulsa +Rp" + data.bonus.toLocaleString('id-ID'));
-                    playRingtone();
-                } else if (data.status === 'REJECT') {
-                    alert("❌ JAWABAN SALAH! Coba susun jawaban lain.");
-                    playBeep(300, 0.3);
-     
+        channel.onmessage

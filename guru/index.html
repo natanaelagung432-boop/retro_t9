@@ -216,23 +216,20 @@
         }
     </style>
 
-    <!-- Firebase SDK v10 -->
+    <!-- Firebase SDK v10 dengan Konfigurasi Asli Anda -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getDatabase, ref, set, push, onValue, update, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-        // ==========================================================
-        // KONFIGURASI FIREBASE
-        // ==========================================================
         const firebaseConfig = {
-  apiKey: "AIzaSyAu-laSOM1Sq4E3_TOtY2c3-UkB4NWCZ2M",
-  authDomain: "retro-communication.firebaseapp.com",
-  databaseURL: "https://retro-communication-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "retro-communication",
-  storageBucket: "retro-communication.firebasestorage.app",
-  messagingSenderId: "1056778348399",
-  appId: "1:1056778348399:web:e7856cd79b2db269402a9a"
-};
+            apiKey: "AIzaSyAu-laSOM1Sq4E3_TOtY2c3-UkB4NWCZ2M",
+            authDomain: "retro-communication.firebaseapp.com",
+            databaseURL: "https://retro-communication-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "retro-communication",
+            storageBucket: "retro-communication.firebasestorage.app",
+            messagingSenderId: "1056778348399",
+            appId: "1:1056778348399:web:e7856cd79b2db269402a9a"
+        };
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
@@ -249,23 +246,30 @@
             }
         };
 
-        // State Token
-        let activeToken = localStorage.getItem('nokia_teacher_token') || generateNewToken();
-        document.getElementById('tokenDisplay').innerText = activeToken;
-        set(ref(db, 'room_session/active_token'), activeToken);
-
+        // Fungsi Generate & Update Token Sesi
         function generateNewToken() {
             const token = "N3310-" + Math.floor(1000 + Math.random() * 9000);
             localStorage.setItem('nokia_teacher_token', token);
             return token;
         }
 
+        // Inisialisasi Token saat halaman dimuat
+        let currentToken = localStorage.getItem('nokia_teacher_token');
+        if (!currentToken) {
+            currentToken = generateNewToken();
+        }
+        
+        // Tampilkan langsung ke elemen UI
+        document.getElementById('tokenDisplay').innerText = currentToken;
+        set(ref(db, 'room_session/active_token'), currentToken);
+
+        // Tombol Acak Token Baru
         window.resetToken = function() {
-            if(confirm("Regenerate token baru? Token lama tidak berlaku lagi.")) {
-                activeToken = generateNewToken();
-                document.getElementById('tokenDisplay').innerText = activeToken;
-                set(ref(db, 'room_session/active_token'), activeToken);
-                alert("Token Sesi Baru: " + activeToken);
+            if(confirm("Regenerate token baru? Token lama tidak berlaku lagi untuk siswa.")) {
+                currentToken = generateNewToken();
+                document.getElementById('tokenDisplay').innerText = currentToken;
+                set(ref(db, 'room_session/active_token'), currentToken);
+                alert("Token Sesi Baru Berhasil Dibuat: " + currentToken);
             }
         };
 

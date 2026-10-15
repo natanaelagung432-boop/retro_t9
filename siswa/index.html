@@ -83,7 +83,7 @@
             margin-bottom: 12px;
         }
 
-        /* Screen Display LCD */
+        /* Screen Display LCD - Diperbesar agar muat 3 baris */
         .lcd-screen {
             background-color: var(--lcd-bg);
             color: var(--lcd-text);
@@ -91,7 +91,7 @@
             border-radius: 12px;
             padding: 10px;
             font-family: 'VT323', monospace;
-            height: 190px;
+            height: 220px;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
@@ -113,32 +113,41 @@
             flex-grow: 1;
             margin: 6px 0;
             overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
         }
 
         .question-box {
-            font-size: 1.15rem;
+            font-size: 1.1rem;
             line-height: 1.1;
-            margin-bottom: 6px;
             background: rgba(0,0,0,0.05);
             padding: 4px;
             border-radius: 4px;
+            max-height: 60px;
+            overflow-y: auto;
         }
 
+        /* Draft box muat 3 baris */
         .draft-box {
-            font-size: 1.3rem;
+            font-size: 1.25rem;
             word-break: break-all;
-            min-height: 32px;
+            min-height: 64px;
+            max-height: 80px;
             background: rgba(255,255,255,0.2);
             padding: 4px;
             border: 1px solid #334e23;
+            overflow-y: auto;
+            line-height: 1.2;
         }
 
         .cursor {
             display: inline-block;
-            width: 8px;
-            height: 16px;
+            width: 7px;
+            height: 15px;
             background-color: var(--lcd-text);
             animation: blink 0.8s infinite;
+            vertical-align: middle;
         }
 
         @keyframes blink { 50% { opacity: 0; } }
@@ -176,7 +185,7 @@
             font-size: 0.9rem;
             box-shadow: 0 4px 0 #0369a1;
             cursor: pointer;
-            width: 60%;
+            width: 55%;
         }
 
         .btn-navi:active {
@@ -188,17 +197,30 @@
             background-color: #ef4444;
             color: white;
             border: none;
-            padding: 12px 18px;
+            padding: 12px 14px;
             border-radius: 20px;
             font-weight: bold;
-            font-size: 0.85rem;
+            font-size: 0.75rem;
             box-shadow: 0 4px 0 #b91c1c;
             cursor: pointer;
+            position: relative;
+            overflow: hidden;
         }
 
         .btn-clear:active {
             transform: translateY(2px);
             box-shadow: 0 2px 0 #b91c1c;
+        }
+
+        /* Progress bar untuk indikator hold 3 detik */
+        .clear-progress {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 4px;
+            background-color: #fef08a;
+            width: 0%;
+            transition: width 0.1s linear;
         }
 
         .num-grid {
@@ -240,7 +262,7 @@
             height: 10px;
         }
 
-        /* Panduan Modal */
+        /* Modal Panduan */
         .modal {
             display: none;
             position: fixed;
@@ -284,13 +306,13 @@
         <!-- LCD DISPLAY -->
         <div class="lcd-screen" id="lcdScreen">
             <div class="lcd-header">
-                <span>✉ SMS</span>
+                <span>✉ SMS <span id="caseIndicator" style="font-size: 0.9rem; color: #1a2512; background: #a3c988; padding: 0 3px;">abc</span></span>
                 <span id="pulsaDisplay">Rp10.000</span>
             </div>
 
             <div class="lcd-content">
                 <div class="question-box" id="questionBox">Menunggu soal dari Guru...</div>
-                <div style="font-size: 0.9rem; margin-top: 4px;">DRAFT JAWABAN:</div>
+                <div style="font-size: 0.85rem; margin-top: 2px;">DRAFT JAWABAN (3 Baris):</div>
                 <div class="draft-box">
                     <span id="draftText"></span><span class="cursor"></span>
                 </div>
@@ -306,7 +328,12 @@
         <div class="keypad-container">
             <!-- Navigation Row -->
             <div class="navi-row">
-                <button class="btn-clear" onclick="clearChar()">C (Hapus)</button>
+                <button class="btn-clear" id="btnClear" 
+                    ontouchstart="startClearHold(event)" onmousedown="startClearHold(event)"
+                    ontouchend="cancelClearHold()" onmouseup="cancelClearHold()" onmouseleave="cancelClearHold()">
+                    C (Tahan 3dtk)
+                    <div class="clear-progress" id="clearProgress"></div>
+                </button>
                 <button class="btn-navi" onclick="sendSMS()">KIRIM SMS</button>
             </div>
 
@@ -318,35 +345,35 @@
                 </button>
                 <button class="key-btn" onclick="pressKey('2')">
                     <span class="key-num">2</span>
-                    <span class="key-sub">ABC</span>
+                    <span class="key-sub">abc</span>
                 </button>
                 <button class="key-btn" onclick="pressKey('3')">
                     <span class="key-num">3</span>
-                    <span class="key-sub">DEF</span>
+                    <span class="key-sub">def</span>
                 </button>
                 <button class="key-btn" onclick="pressKey('4')">
                     <span class="key-num">4</span>
-                    <span class="key-sub">GHI</span>
+                    <span class="key-sub">ghi</span>
                 </button>
                 <button class="key-btn" onclick="pressKey('5')">
                     <span class="key-num">5</span>
-                    <span class="key-sub">JKL</span>
+                    <span class="key-sub">jkl</span>
                 </button>
                 <button class="key-btn" onclick="pressKey('6')">
                     <span class="key-num">6</span>
-                    <span class="key-sub">MNO</span>
+                    <span class="key-sub">mno</span>
                 </button>
                 <button class="key-btn" onclick="pressKey('7')">
                     <span class="key-num">7</span>
-                    <span class="key-sub">PQRS</span>
+                    <span class="key-sub">pqrs</span>
                 </button>
                 <button class="key-btn" onclick="pressKey('8')">
                     <span class="key-num">8</span>
-                    <span class="key-sub">TUV</span>
+                    <span class="key-sub">tuv</span>
                 </button>
                 <button class="key-btn" onclick="pressKey('9')">
                     <span class="key-num">9</span>
-                    <span class="key-sub">WXYZ</span>
+                    <span class="key-sub">wxyz</span>
                 </button>
                 <button class="key-btn" onclick="openGuide()">
                     <span class="key-num">?</span>
@@ -356,9 +383,9 @@
                     <span class="key-num">0</span>
                     <span class="key-sub">[Spasi]</span>
                 </button>
-                <button class="key-btn" onclick="pressKey('#')">
+                <button class="key-btn" onclick="toggleCase()">
                     <span class="key-num">#</span>
-                    <span class="key-sub">⇧ / aA</span>
+                    <span class="key-sub">aA/⇧</span>
                 </button>
             </div>
         </div>
@@ -369,9 +396,9 @@
         <div class="modal-content">
             <h3>📖 Panduan T9 & Aturan</h3>
             <ul>
-                <li>Setiap karakter diketik memotong <b>Rp350 Pulsa</b> saat dikirim.</li>
-                <li>Gunakan singkatan masuk akal agar hemat pulsa (cth: <i>KLRF</i> untuk Klorofil).</li>
-                <li>Tekan tombol cepat untuk memilih huruf (cth: tekan '2' dua kali untuk huruf 'B').</li>
+                <li>Setiap karakter diketik memotong <b>Rp250 Pulsa</b> saat dikirim.</li>
+                <li>Huruf default adalah <b>huruf kecil (abc)</b>. Tekan tombol <b>#</b> untuk mengubah ke huruf kapital (ABC).</li>
+                <li>Tekan & tahan tombol <b>C</b> selama 3 detik untuk menghapus seluruh tulisan sekaligus.</li>
             </ul>
             <button class="btn-close" onclick="closeGuide()">Tutup</button>
         </div>
@@ -379,11 +406,12 @@
 
     <script>
         // Data & Variable Game
-        const COST_PER_CHAR = 350;
+        const COST_PER_CHAR = 250; // Diturunkan dari 350 ke 250
         let playerName = localStorage.getItem('nokia_player_name') || 'Kelompok ' + Math.floor(Math.random() * 90 + 10);
         let pulsa = parseInt(localStorage.getItem('nokia_pulsa_' + playerName)) || 10000;
         
         let draft = "";
+        let isUpperCase = false; // Default huruf kecil
         let currentKey = null;
         let keyIndex = 0;
         let keyTimer = null;
@@ -391,25 +419,22 @@
 
         const keyMap = {
             '1': ['.', ',', '?', '!'],
-            '2': ['A', 'B', 'C'],
-            '3': ['D', 'E', 'F'],
-            '4': ['G', 'H', 'I'],
-            '5': ['J', 'K', 'L'],
-            '6': ['M', 'N', 'O'],
-            '7': ['P', 'Q', 'R', 'S'],
-            '8': ['T', 'U', 'V'],
-            '9': ['W', 'X', 'Y', 'Z'],
+            '2': ['a', 'b', 'c'],
+            '3': ['d', 'e', 'f'],
+            '4': ['g', 'h', 'i'],
+            '5': ['j', 'k', 'l'],
+            '6': ['m', 'n', 'o'],
+            '7': ['p', 'q', 'r', 's'],
+            '8': ['t', 'u', 'v'],
+            '9': ['w', 'x', 'y', 'z'],
             '0': [' ']
         };
 
-        // BroadcastChannel untuk Sync antar Tab/Page secara Realtime
         const channel = new BroadcastChannel('nokia_3310_channel');
 
-        // Init State
         document.getElementById('playerDisplay').innerText = "ID: " + playerName;
         updatePulsaDisplay();
 
-        // Audio Synth untuk Bip Retro
         function playBeep(freq = 600, duration = 0.05) {
             try {
                 const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -428,6 +453,13 @@
             setTimeout(() => playBeep(1200, 0.2), 240);
         }
 
+        // Toggle Huruf Kapital / Kecil via Tombol #
+        function toggleCase() {
+            isUpperCase = !isUpperCase;
+            document.getElementById('caseIndicator').innerText = isUpperCase ? 'ABC' : 'abc';
+            playBeep(900, 0.06);
+        }
+
         // T9 Engine Logic
         function pressKey(key) {
             playBeep(700, 0.04);
@@ -435,14 +467,15 @@
 
             if (!keyMap[key]) return;
 
-            const chars = keyMap[key];
+            let chars = keyMap[key];
+            if (isUpperCase) {
+                chars = chars.map(c => c.toUpperCase());
+            }
 
             if (currentKey === key) {
-                // Ketukan berturut-turut pada tombol yang sama
                 keyIndex = (keyIndex + 1) % chars.length;
                 draft = draft.slice(0, -1) + chars[keyIndex];
             } else {
-                // Tombol baru ditekan
                 commitKey();
                 currentKey = key;
                 keyIndex = 0;
@@ -463,13 +496,51 @@
             updateDraftUI();
         }
 
-        function clearChar() {
-            playBeep(400, 0.05);
+        // Tombol C: Ketuk biasa = hapus 1 karakter terakhir
+        // Tahan 3 detik = hapus semua
+        let clearHoldTimer = null;
+        let progressTimer = null;
+        let holdStartTime = 0;
+
+        function startClearHold(e) {
+            e.preventDefault();
             commitKey();
-            if (draft.length > 0) {
-                draft = draft.slice(0, -1);
+            
+            const progressBar = document.getElementById('clearProgress');
+            progressBar.style.width = '0%';
+            holdStartTime = Date.now();
+
+            // Animasi progress bar selama 3 detik
+            progressTimer = setInterval(() => {
+                let elapsed = Date.now() - holdStartTime;
+                let pct = Math.min((elapsed / 3000) * 100, 100);
+                progressBar.style.width = pct + '%';
+            }, 50);
+
+            // Trigger hapus semua setelah 3 detik
+            clearHoldTimer = setTimeout(() => {
+                cancelClearHold();
+                draft = "";
                 updateDraftUI();
+                playBeep(300, 0.2);
+                if (navigator.vibrate) navigator.vibrate([50, 50, 50]);
+            }, 3000);
+        }
+
+        function cancelClearHold() {
+            clearTimeout(clearHoldTimer);
+            clearInterval(progressTimer);
+            document.getElementById('clearProgress').style.width = '0%';
+
+            // Jika ditekan sebentar (kurang dari 3 detik), anggap sebagai hapus 1 karakter
+            if (holdStartTime && (Date.now() - holdStartTime < 800)) {
+                playBeep(400, 0.05);
+                if (draft.length > 0) {
+                    draft = draft.slice(0, -1);
+                    updateDraftUI();
+                }
             }
+            holdStartTime = 0;
         }
 
         function updateDraftUI() {
@@ -499,11 +570,9 @@
                 return;
             }
 
-            // Potong pulsa
             pulsa -= cost;
             updatePulsaDisplay();
 
-            // Kirim pesan ke Guru & Display lewat BroadcastChannel
             channel.postMessage({
                 type: 'SUBMIT_ANSWER',
                 playerName: playerName,
@@ -517,12 +586,10 @@
             playBeep(1000, 0.15);
             alert("SMS Jawaban Terkirim! Pulsa terpotong Rp" + cost.toLocaleString('id-ID'));
             
-            // Reset Draft
             draft = "";
             updateDraftUI();
         }
 
-        // Listen Soal dari Guru
         channel.onmessage = (event) => {
             const data = event.data;
             if (data.type === 'BROADCAST_SOAL') {
@@ -534,15 +601,4 @@
                     updatePulsaDisplay();
                     alert("🎉 SELAMAT! Jawabanmu BENAR (ACC)! Bonus Pulsa +Rp" + data.bonus.toLocaleString('id-ID'));
                     playRingtone();
-                } else if (data.status === 'REJECT') {
-                    alert("❌ JAWABAN SALAH! Coba susun jawaban lain.");
-                    playBeep(300, 0.3);
-                }
-            }
-        };
-
-        function openGuide() { document.getElementById('guideModal').style.display = 'flex'; }
-        function closeGuide() { document.getElementById('guideModal').style.display = 'none'; }
-    </script>
-</body>
-</html>
+                } e
